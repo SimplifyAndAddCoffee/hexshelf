@@ -1,38 +1,83 @@
 /*
-
 modular honeycomb shelf generator.
-The outer circumradius must be no larger than 1/2 your printer bed's larger size dimension for proper printing
-The outer inradius must be no larger than 1/2 your printer bed's smaller size dimension
-for square beds, you need only concern yourself with the outer circumradius. 
-wall thickness should be a minimum of 3/4 the diameter of the mounting screw heads. Brad holes are provided for affixing during test fitting and for extra reinforcement in mounting where there aren't enough inner joining pieces to support the shelf
+Hexagon_width can be no larger than your print area's wider dimension
+wall thickness should be a minimum of 3/4 the diameter of the mounting screw heads. 
+Brad holes are provided primarily for fitment and are not meant to be load bearing (the brads will pull out of the wall)
+Default settings are for 15 gauge wire brads, standard drywall screws.
+218mm width should fit on *most* average printer beds
+Free for non-commercial use, please attribute and share alike.
+
+https://github.com/SimplifyAndAddCoffee
+https://www.thingiverse.com/simplifyandaddcoffee/designs
+
+ _________________
+|# :           : #|
+|  : HACK      :  |
+|  :   THE     :  |
+|  :    PLANET :  |
+|  :___________:  |
+|     _________   |
+|    | __      |  |
+|    ||  |     |  |
+\____||__|_____|__|
 
 */
 
-render_type = "plated"; //["plated","preview","window cut svg"]
-num_joiners = 3; // how many joining pieces to print with each cell
-num_covers = 3; // how many edge pieces to print with each cell
-num_longstaves = 3; // how many long (joining) staves to print with each cell
-num_shortstaves = 3; // how many short (edge) staves to print with each cell
-hexagon_width = 218; // how wide each cell is, (max=bed width)
-wall_thickness = 10; // how thick the outer walls are
-use_recommended_depth = true; // [true,false] use inner circumradius as depth. else...
-depth_override = 170; // what to use if not recommended
-include_divider=true; // middle horizontal divider if you want it
-window_recession = true; //recess for front acrylic window or door to keep dust out.
-window_thickness = 2.9; //thickness of material used for window/door
-window_hole_size = 20; //size of finger hole for removing window
-screw_diameter = 4.1;
-screw_head_diameter = 8.5;
-screw_head_thickness = 1;
-screw_countersink_depth =2.3;
-screw_inset = 10;
-brad_hole_diameter = 2;
-brad_head_diameter = 3.2;
-brad_head_inset = 1.5;
-dovetail_thickness = 20;
-tol = 0.25; // tolerance between parts
+/* [Main Parameters] */
 
-$fn=32;
+// What to render. 
+render_type = "plated"; //["plated","preview","window cut svg"]
+// how many joining pieces to print with each cell.
+num_joiners = 3; // [0,1,2,3]
+// how many edge pieces to print with each cell
+num_covers = 3; // [0,1,2,3]
+// how many long (joining) staves to print with each cell
+num_longstaves = 3;  // [0,1,2,3]
+// how many short (edge) staves to print with each cell
+num_shortstaves = 3;  // [0,1,2,3]
+// print a center horizontal divider shelf (optional)
+include_divider=true; // [true,false]
+// set to false if you only want to print the small pieces. 
+include_cell=true; // [true,false]
+// how wide each cell is, (max=bed width)
+hexagon_width = 218; //
+// how thick the outer walls are. Note: Should be at least 3/4 the diameter of the screw heads used to attach to the wall.
+wall_thickness = 10; // 
+// True to use inner circumradius as depth.
+use_recommended_depth = true; // [true,false]
+// manually set depth of shelf (mm)
+depth_override = 170; 
+// depth of the dovetail joining pieces. Must be shorter than the total depth of the shelf. 
+dovetail_thickness = 20;
+// recess for front acrylic window or door to keep dust out.
+window_recession = true; //[true,false]
+// thickness of material used for window/door
+window_thickness = 2.9; 
+// size of finger hole for removing window
+window_hole_size = 20; 
+// tolerance between parts
+tol = 0.15; 
+
+/* [Fastener Specifications] */
+
+// outer diameter of screw threads
+screw_diameter = 4.1;
+// diameter of screw head
+screw_head_diameter = 8.5;
+// for purpose of calculating inset
+screw_head_thickness = 1;
+// length of the tapered part of the screw head.
+screw_countersink_depth =2.3;
+// how far to recess the screw in the dovetail joint piece.
+screw_inset = 10;
+// diameter of the wire brads for positioning
+brad_hole_diameter = 2;
+// diameter of the wire brad heads
+brad_head_diameter = 3.2;
+// how deep the brad heads are
+brad_head_inset = 1.5;
+
+$fn=32+0;
 
 //calculated values 
 outer_circumradius = hexagon_width /2;
@@ -270,11 +315,12 @@ module preview_bits(){
 }
 
 if(render_type=="plated"){
-cell();
-plated_bits();
-if(include_divider==true)
-    translate([0,hexagon_height/2+wall_thickness*0.6,0])
-        divider();
+    if(include_cell==true)
+        cell();
+    plated_bits();
+    if(include_divider==true)
+        translate([0,hexagon_height/2+wall_thickness*0.6,0])
+            divider();
 }
 
 if(render_type=="window cut svg"){
