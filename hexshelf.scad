@@ -28,7 +28,7 @@ https://www.thingiverse.com/simplifyandaddcoffee/designs
 // What to render. 
 render_type = "plated"; //["plated","preview","window cut svg"]
 // how many joining pieces to print with each cell.
-num_joiners = 3; // [0,1,2,3]
+num_joiners = 2; // [0,1,2,3]
 // how many edge pieces to print with each cell
 num_covers = 3; // [0,1,2,3]
 // how many long (joining) staves to print with each cell
@@ -36,15 +36,17 @@ num_longstaves = 3;  // [0,1,2,3]
 // how many short (edge) staves to print with each cell
 num_shortstaves = 3;  // [0,1,2,3]
 // print a center horizontal divider shelf (optional)
-include_divider=true; // [true,false]
+include_divider=false; // [true,false]
 // set to false if you only want to print the small pieces. 
 include_cell=true; // [true,false]
+// what type of cell to render
+cell_type="hex"; // ["hooks","hex"]
 // how wide each cell is, (max=bed width)
 hexagon_width = 218; //
 // how thick the outer walls are. Note: Should be at least 3/4 the diameter of the screw heads used to attach to the wall.
 wall_thickness = 10; // 
 // True to use inner circumradius as depth.
-use_recommended_depth = true; // [true,false]
+use_recommended_depth = false; // [true,false]
 // manually set depth of shelf (mm)
 depth_override = 170; 
 // depth of the dovetail joining pieces. Must be shorter than the total depth of the shelf. 
@@ -56,7 +58,7 @@ window_thickness = 2.9;
 // size of finger hole for removing window
 window_hole_size = 20; 
 // tolerance between parts
-tol = 0.15; 
+tol = 0.17; 
 
 /* [Fastener Specifications] */
 
@@ -265,6 +267,68 @@ module cell(){
 
 }
 
+module hooks(){
+    hook_d=wall_thickness*2/3;
+    hook_r=0.8;
+    hook_l=wall_thickness*1.5;
+    hook_rot=160;
+    translate([0,inner_inradius,0]){
+        difference(){
+            union(){
+                // baseplate
+                linear_extrude(height = depth)
+                    polygon([[outer_circumradius/2,wall_thickness],[inner_circumradius/2,0],[-inner_circumradius/2,0],[-outer_circumradius/2,wall_thickness]]);
+                // supports
+                difference(){
+                    union(){
+                        translate([0,-inner_inradius,0])
+                            cylinder(h=depth,r=outer_circumradius,$fn=6);
+                    }
+                    union(){
+                        translate([0,-inner_inradius,0])
+                            cylinder(h=depth,r=inner_circumradius,$fn=6);
+                        translate([0,-outer_circumradius*1.25,outer_circumradius*2])
+                            rotate([45,0,0])
+                                cube(outer_circumradius*4,center=true);
+                        
+                    }
+                }
+                // hooks
+                for(x=[-1:1:1]){
+                    for(z=[1:1:3]){
+                        translate([x*inner_circumradius/4,0,z*depth/4]){
+                            translate([0,0,-hook_d*hook_r*2])
+                                rotate([90,0,0])
+                                    cylinder(h=hook_l,d=hook_d,$fn=6);
+                                    translate([0,-hook_l,-hook_d*hook_r])
+                                        rotate([180,90,0])
+                                            rotate_extrude(angle=hook_rot)
+                                                translate([hook_d*hook_r,0,0])
+                                                    rotate([0,0,90])
+                                                        circle(d=hook_d,$fn=6);
+                            translate([0,-hook_l+cos(hook_rot)*hook_r*2,0])
+                                rotate([0180-hook_rot,0,0])
+                                    translate([0,0,0])
+                                        sphere(d=hook_d, $fn=6);
+                        }
+                    }
+                }
+            }
+            union(){
+                rotate([0,0,90])
+                    translate([outer_inradius-inner_inradius,-outer_circumradius * 3/4 * 1/2,0]){
+                            joiner(cutout=true,type="inner");translate([0,outer_circumradius * 3/4 * 1/2 - outer_circumradius * 3/4 * 1/4 * 1/2,dovetail_thickness /3])
+                                mirror([1,0,0])
+                                    stave(cutout=true,type="short");
+                            }
+                translate([0,-wall_thickness,depth+outer_circumradius/2])
+                    rotate([45,0,0])
+                        cube(outer_circumradius,center=true);
+            }
+        }
+    }
+}
+
 module divider(){
 intersection(){
 translate([-hexagon_width/2,-wall_thickness/2,0])
@@ -315,8 +379,12 @@ module preview_bits(){
 }
 
 if(render_type=="plated"){
-    if(include_cell==true)
-        cell();
+    if(include_cell==true){
+        if(cell_type=="hex")
+            cell();
+        if(cell_type=="hooks")
+            hooks();
+        }
     plated_bits();
     if(include_divider==true)
         translate([0,hexagon_height/2+wall_thickness*0.6,0])
